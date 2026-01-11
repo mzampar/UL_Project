@@ -7,3 +7,4 @@ miscellanea/
 UL_ae_*
 __pycache__/
 **/__pycache__
+.DS_Store

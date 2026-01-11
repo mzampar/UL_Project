@@ -13,13 +13,13 @@ January 13, 2026
 
 # Clustering Auto-Encoder
 
-This project is aimed at implementing the Clustering Auto Encoder (CAE), a method proposed in: **Identifying Climate Patterns Using Clustering Autoencoder Techniques** [1] 
+This project is aimed at implementing the Clustering Autoencoder (CAE), a method proposed in: **Identifying Climate Patterns Using Clustering Autoencoder Techniques** [1] 
 
 ---
 
 ![bg right width:600px](./figure/model.png)
 
-The idea is to add to the Convolutional Auto Encoder a **single-layer perceptron** $F_p$ to map the latent representation $z$ into $\mathbb{R}^n$ (the space where the **cluster prototypes** $c$ are defined) and to return a probability distribution over the possible clusters proportional to the scalar product $F_p(z) \cdot c$. 
+The idea is to add to the Convolutional Autoencoder a **single-layer perceptron** $F_p$ to map the latent representation $z$ into $\mathbb{R}^n$ (the space where the **cluster prototypes** $c$ are defined) and to return a probability distribution over the possible clusters proportional to the scalar product $F_p(z) \cdot c$. 
 
 
 ---
@@ -40,7 +40,7 @@ Given a data point $x$, the $CAE$ encodes the data in a **latent space** through
 
 The latent representation $z$ is passed through the **decoder**, the reconstructed $\hat{x}$ is obtained and the **reconstruction loss** $RMSE(x,\hat{x})$ is computed.
 
-The latent representation $z$ is also passed through a **single-layer perceptron** with a **ReLu** activation function to map it into $\mathbb{R}^n$. Given a set of $k$ (trainable) **cluster prototypes**, the probability distribution of a point $x$ of belonging to a given cluster is computed passing the scalar product $F_p(z) \cdot{} c$ through a **softmax layer**, with temperature parameter $\tau$ that regulates the probability of the most probable cluster, (the lower tau, the higher the probabiltiy of the most probable cluster).
+The latent representation $z$ is also passed through a **single-layer perceptron** with a **ReLu** activation function to map it into $\mathbb{R}^n$. Given a set of $k$ (trainable) **cluster prototypes**, the probability distribution of a point $x$ of belonging to a given cluster is computed passing the scalar product $F_p(z) \cdot{} c$ through a **softmax layer**, with temperature parameter $\tau$ that regulates the probability of the most probable cluster, (the lower $\tau$, the higher the probabiltiy of the most probable cluster).
 
 $$
 
@@ -68,7 +68,7 @@ Target cluster assingments are obtained with the iterative **Sinkhorn-Knopp algo
 Let us define: $Z \in \mathbb{R}^{B \times n}$, the latent representation of the points of the batch, passed through $F_p$; $C \in \mathbb{R}^{n \times k}$, the cluster prototypes; $Q \in \mathbb{R}^{k \times B}$, the cluster probability distribution for each data point in the batch.
 
 The matrix $Q = \operatorname{Diag}(\mathbf{u})\, \exp\!\left( \frac {\mathbf{C}^{\top} \mathbf{Z}} {\epsilon} \right)\,
-\operatorname{Diag}(\boldsymbol{\upsilon})$, where $u$ and $v$ are computed by renormalization in $\mathbb{R}^k$ and $\mathbb{R}^B$, respectively, through the Sinkhorn–Knopp algorithm (iterative row-normalisation and column-normalisation), is the solution to the problem: 
+\operatorname{Diag}(\boldsymbol{\upsilon})$, where $u$ and $v$ are computed by renormalization in $\mathbb{R}^k$ and $\mathbb{R}^B$ through the Sinkhorn–Knopp algorithm (iterative row-normalisation and column-normalisation), is the solution to the problem: 
 
 $$
 
@@ -110,7 +110,7 @@ The **clustering loss** is computed via **cross-entropy** between the target ass
 
 The final loss is the **weighted sum** of the reconstruction and clustering loss terms. When we optimise it by Gradient descent, we optimse both the encoder-decoder architectures, the cluster prototypes and the parameters of the single-layer perceptron $F_p$.
 
-The encoder and decoder architectures, since we are working with 3d data (lat x lon x time), are **Convolutional Neural Networks**. We kept a similar structure of the CNN encoder and decoder wrt the orignal paper.
+The encoder and decoder architectures, since we are working with 3D data (lat x lon x time), are **Convolutional Neural Networks**. We kept a similar structure of the CNN encoder and decoder wrt the orignal paper.
 
 ---
 
@@ -155,8 +155,8 @@ Each grid cell is assigned to the **most frequent cluster** of the patches that 
 After some tuning of the parameters, we found a nice configuration (different from the one of the paper):
 
 - $\alpha = 0.5$
-- $\epsilon = 0.09$
 - $\tau = 0.05$
+- $\epsilon = 0.09$
 - learning rate $= 10^{-4}$
 - batch size $= 512$
 - latent dimension = 512
@@ -224,6 +224,50 @@ where $\sup_x$ denotes the maximum absolute difference between the two CDFs.
 
 ---
 
+# K-medoids clustering
+
+<style>
+table, tr, td {
+  border: none !important;
+  border-collapse: collapse !important;
+}
+</style>
+
+<table>
+<tr>
+<td width="50%">
+
+<strong>Correlation-based</strong>
+<div style="height:0.3em;"></div>
+<!-- <img src="./fig_corr_k_medoids/cluster_map_k_medoids_5_dif_precip_g_798119.png" width="100%"> -->
+<img src="./fig_corr_k_medoids/cluster_map_k_medoids_4_dif_precip_g_798118.png" width="100%">
+
+</td>
+<td width="50%">
+
+<strong>KS-based</strong>
+<div style="height:0.3em;"></div>
+<!-- <img src="./fig_KS_k_medoids/cluster_map_k_medoids_5_dif_precip_g_798103.png" width="100%"> -->
+<img src="./fig_KS_k_medoids/cluster_map_k_medoids_4_dif_precip_g_798104.png" width="100%">
+
+</td>
+</tr>
+</table>
+
+---
+
+In the first case we find homogenous-in-space clusters, probably due to the fact that precipitation shows high **spatial autocorrelation**.
+
+In the second case, since KS distance doesn't take into account the temporal correlation of the data, but only the distance between its **ECDFs**, we can see that the results seem to have a physical meaning and are probably driven by the orography.
+
+The number of clusters is chosen to be **4**. This was chosen looking at the KS distance-based cluster plots, promoting interpretability and physical meaning of the clusters, and the Scree test.
+
+<!-- inertia: Sum of distances of samples to their closest cluster center.-->
+
+---
+
+# Scree test
+
 <style>
 table, tr, td {
   border: none !important;
@@ -237,28 +281,23 @@ table, tr, td {
 
 <strong>Correlation-based k-medoids</strong>
 <div style="height:0.3em;"></div>
-<img src="./fig_corr_k_medoids/cluster_map_k_medoids_5_dif_precip_g_798119.png" width="100%">
+<img src="./fig_corr_k_medoids/k_medoids_corr_loss.png" width="100%">
 
 </td>
 <td width="50%">
 
 <strong>KS-based k-medoids</strong>
 <div style="height:0.3em;"></div>
-<img src="./fig_KS_k_medoids/cluster_map_k_medoids_5_dif_precip_g_798103.png" width="100%">
+<img src="./fig_KS_k_medoids/k_medoids_KS_loss.png" width="100%">
 
 </td>
 </tr>
 </table>
 
----
-
-In the first case we find homogenous-in-space clusters, probably due to the fact that precipitation shows high **spatial autocorrelation**.
-
-In the second case, since KS distance doesn't take into account the temporal correlation of the data, but only the distance between its **ECDFs**, we can see that the results seem to have a physical meaning and are probably driven by the orography.
-
-The number of clusters is chosen to be **5**. This was chosen looking at the KS distance-based cluster plots, promoting interpretability and physical meaning of the clusters.
 
 ---
+
+# Pros and cons of the CAE
 
 <!-- _class: small -->
 
@@ -275,22 +314,22 @@ section.small {
 ### Strengths
 - Leverages more information: k-medoids condenses all information 
 into a single distance matrix, 
-while CAE uses information coming from different years
+while CAE uses information coming from different years.
 - Takes spatial autocorrelation into account with 8×8 pixel patches, 
-but pools together different years of the same patch, allowing robust yet non-dominant spatial patterns, combining KS distance and Pearson correlation approaches  
-- Scales well to large datasets  
-- Fuzzy clustering can be obtained by combining assignments of the same patch  
+but pools together different years of the same patch, allowing robust yet non-dominant spatial patterns, combining KS distance and Pearson correlation approaches.
+- Scales well to large datasets.
+- Fuzzy clustering can be obtained by combining assignments of the same patch.
 
 </td>
 <td style="width:50%; vertical-align:top; border:none; padding-left:20px;">
 
 ### Weaknesses
-- Requires a GPU  
-- Overfitting: model may not generalize well  
-- Unreliable results: training sometimes fails to converge  
-- Initialization dependence: different runs give different results
-- Parameter tuning (tau and epsilon) is non-obvious: using paper parameters didn't work
-- Number of clusters is a parameter
+- Requires a GPU.
+- Overfitting: model may not generalize well.
+- Unreliable results: training sometimes fails to converge.
+- Initialization dependence: different runs give different results.
+- Parameter tuning (tau and epsilon) is non-obvious: using paper parameters didn't work.
+- Number of clusters is a parameter.
 
 </td>
 </tr>

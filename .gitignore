@@ -1,0 +1,9 @@
+csv/
+fig/
+log/
+logs/
+old/
+miscellanea/
+UL_ae_*
+__pycache__/
+**/__pycache__

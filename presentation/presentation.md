@@ -5,7 +5,7 @@ author: Marco Zampar
 date: January 13, 2026
 ---
 
-# Presentation Unsupervised Learning project
+# Unsupervised Learning project
 ### Marco Zampar - SM3800032
 January 13, 2026
 
@@ -17,12 +17,16 @@ This project is aimed at implementing the Clustering Autoencoder (CAE), a method
 
 ---
 
+# Model architecture
+
 ![bg right width:600px](./figure/model.png)
 
 The idea is to add to the Convolutional Autoencoder a **single-layer perceptron** $F_p$ to map the latent representation $z$ into $\mathbb{R}^n$ (the space where the **cluster prototypes** $c$ are defined) and to return a probability distribution over the possible clusters proportional to the scalar product $F_p(z) \cdot c$. 
 
 
 ---
+
+
 
 <!-- _class: small -->
 
@@ -32,9 +36,7 @@ section.small {
 }
 </style>
 
-<!--The training phase works like this: -->
 
-# Training phase
 
 Given a data point $x$, the $CAE$ encodes the data in a **latent space** through an **encoder**, this latent representation is flattened into a vector $z \in \mathbb{R}^m$.
 
@@ -117,7 +119,7 @@ The encoder and decoder architectures, since we are working with 3D data (lat x 
 
 <!-- _class: small -->
 
-# Experiment:
+# Experiment
 
 <style>
 section.small {
@@ -126,7 +128,8 @@ section.small {
 </style>
 
 Are there any climatological regional patterns in the **Friuli Venezia Giulia** region that can be found through a clustering technique?
-Working with a reanalysis of 2km spatial resolution (68x66=4488 gridpoints) and hourly temporal resolution, we analyse more than 20 years (2001-2023) of **precipitation** (mm/h), working with **monthly means**.
+
+We work with a reanalysis of 2km spatial resolution (68x66=4488 gridpoints) and hourly temporal resolution, we analyse more than 20 years (2001-2023) of **precipitation** (mm/h), working with **monthly means**.
 The period (2001-2017) is taken as training set and the period (2018-2023) as test set.
 
 When talking about **clusters**, we refer to a partition of the gridpoints based on similar **climatologial patterns**.
@@ -140,11 +143,11 @@ When talking about **clusters**, we refer to a partition of the gridpoints based
 
 <style>
 section.small {
-  font-size: 1.55em;
+  font-size: 1.0em;
 }
 </style>
 
-# Data and Training:
+# Data and Training
 
 After rescaling the data (min-max scaling on a monthly basis) and extracting patches of shape 8x8 (64 gridpoints) moving the patch with a **stride** of 2, the monthly cumulatives of each year are stacked one on the other, to get a 3D-tensor of shape **8x8x12**.
 
@@ -157,10 +160,10 @@ After some tuning of the parameters, we found a nice configuration (different fr
 - $\alpha = 0.5$
 - $\tau = 0.05$
 - $\epsilon = 0.09$
-- learning rate $= 10^{-4}$
 - batch size $= 512$
-- latent dimension = 512
-- prototypes dimension = 512
+- latent dimension = $512$
+- prototypes dimension = $512$
+<!-- - learning rate $= 10^{-4}$ -->
 
 ---
 
@@ -205,12 +208,12 @@ section.small {
 }
 </style>
 
-# Comparison with other methods:
+# Comparison with other methods: k-medoids clustering
 
 <!-- Maybe you shuould compare with periods of train and test set! -->
 
 A different method was tested: **k-medoids**. This was chosen because, despite its simplicty, it allows to use a generic distance matrix.
-Many number of clusters were tested, and since the results can be easily visually inspected, the choice of the number of clusters was done looking at the cluster plots.
+Many number of clusters were tested, and since the results can be easily visually inspected, the choice of the number of clusters was done looking at the cluster plots and at the Scree test.
 2 distances were used: the **Pearson correlation coefficient** between each pair of monhtly time series ($d_{ij} = 1 - \rho$) and the **Kolmogorov-Smirnov distance** between the **Empirical Cumulative Distribution Functions** of each pair of samples ($d_{ij} = D_{KS}(F_i , F_j)$). 
 
 The **KS distance** between two cumulative distribution functions (CDFs) \(F(x)\) and \(G(x)\) is defined as:
@@ -223,8 +226,6 @@ where $\sup_x$ denotes the maximum absolute difference between the two CDFs.
 
 
 ---
-
-# K-medoids clustering
 
 <style>
 table, tr, td {
@@ -260,7 +261,7 @@ In the first case we find homogenous-in-space clusters, probably due to the fact
 
 In the second case, since KS distance doesn't take into account the temporal correlation of the data, but only the distance between its **ECDFs**, we can see that the results seem to have a physical meaning and are probably driven by the orography.
 
-The number of clusters is chosen to be **4**. This was chosen looking at the KS distance-based cluster plots, promoting interpretability and physical meaning of the clusters, and the Scree test.
+The number of clusters is chosen to be **4**. This was chosen looking at the Scree test and at the KS distance-based cluster plots, promoting interpretability and physical meaning of the clusters.
 
 <!-- inertia: Sum of distances of samples to their closest cluster center.-->
 
@@ -303,7 +304,7 @@ table, tr, td {
 
 <style>
 section.small {
-  font-size: 1.55em;
+  font-size: 0.55em;
 }
 </style>
 
@@ -312,13 +313,16 @@ section.small {
 <td style="width:50%; vertical-align:top; border:none; padding-right:20px;">
 
 ### Strengths
-- Leverages more information: k-medoids condenses all information 
-into a single distance matrix, 
-while CAE uses information coming from different years.
-- Takes spatial autocorrelation into account with 8×8 pixel patches, 
-but pools together different years of the same patch, allowing robust yet non-dominant spatial patterns, combining KS distance and Pearson correlation approaches.
+- Takes spatial autocorrelation into account with 8×8 
+pixel patches, but pools together different years of the same patch, allowing robust yet non-dominant spatial patterns,
+combining correlation and KS-distance based approaches.
 - Scales well to large datasets.
 - Fuzzy clustering can be obtained by combining assignments of the same patch.
+
+<!-- - Leverages more information: k-medoids condenses all information 
+into a single distance matrix, 
+while CAE uses information coming from different years.
+-->
 
 </td>
 <td style="width:50%; vertical-align:top; border:none; padding-left:20px;">
@@ -326,8 +330,7 @@ but pools together different years of the same patch, allowing robust yet non-do
 ### Weaknesses
 - Requires a GPU.
 - Overfitting: model may not generalize well.
-- Unreliable results: training sometimes fails to converge.
-- Initialization dependence: different runs give different results.
+- Unreliable results: training sometimes fails to converge and it is initialization dependent.
 - Parameter tuning (tau and epsilon) is non-obvious: using paper parameters didn't work.
 - Number of clusters is a parameter.
 
